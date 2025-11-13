@@ -1,9 +1,10 @@
 {
   "name": "v-3",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "lambda.js",
   "type": "module",
   "scripts": {
+    "build": "zip -r function.zip .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js"
@@ -13,6 +14,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@codegenie/serverless-express": "^4.17.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.5.0",
