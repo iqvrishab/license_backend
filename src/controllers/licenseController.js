@@ -33,7 +33,7 @@ export async function checkLicense(req, res) {
       clientId: license.clientId,
       expiryDate: license.expiryDate,
       hmac,
-      email: license.email, 
+      email: license.email,
       instanceId: license.instanceId,
     });
   } catch (error) {
@@ -45,16 +45,16 @@ export async function checkLicense(req, res) {
 // Generate or retrieve a license (for admin use)
 export async function generateLicense(req, res) {
   try {
-    const { 
-      clientId, 
-      expiryDate, 
-      email, 
-      application, 
+    const {
+      clientId,
+      expiryDate,
+      email,
+      application,
       licenseType,
-      clientName, 
-      clientEmail, 
-      identiqaName, 
-      identiqaEmail 
+      clientName,
+      clientEmail,
+      identiqaName,
+      identiqaEmail,
     } = req.body;
 
     if (!clientId || !expiryDate || !email || !application) {
@@ -139,8 +139,6 @@ export async function getAllLicenses(req, res) {
   }
 }
 
-//Delete Licenses
-
 // Delete license by licenseKey
 export async function deleteLicense(req, res) {
   try {
@@ -171,7 +169,7 @@ export async function updateLicense(req, res) {
     if (status) updateData.status = status;
 
     const updatedLicense = await License.findOneAndUpdate(
-      { licenseKey },
+      { licenseKey: cleanKey },
       { $set: updateData },
       { new: true }
     );
@@ -190,8 +188,7 @@ export async function updateLicense(req, res) {
   }
 }
 
-
-// POST /api/check-license (new version using both licenseKey + instanceId)
+// POST /backend_api/check-license (new version using both licenseKey + instanceId)
 export async function checkLicensePost(req, res) {
   try {
     const { licenseKey, instanceId } = req.body;
@@ -245,3 +242,39 @@ export async function syncMonitoringNow(req, res) {
     res.status(500).json({ message: 'Server error' });
   }
 }
+
+// Update monitoring usage (host count + version)
+export async function updateMonitoringUsage(req, res) {
+  try {
+    const { licenseKey, instanceId, totalHosts, zabbixVersion } = req.body;
+
+    if (!licenseKey || !instanceId) {
+      return res.status(400).json({ ok: false, message: 'licenseKey and instanceId are required' });
+    }
+
+    const result = await License.updateOne(
+      { licenseKey, instanceId },
+      {
+        $set: {
+          totalHosts,
+          zabbixVersion,
+          lastMonitoringSyncAt: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ ok: false, message: 'License not found for this instance' });
+    }
+
+    return res.json({
+      ok: true,
+      matched: result.matchedCount,
+      modified: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error('Update monitoring usage error:', error);
+    res.status(500).json({ ok: false, message: 'Server error' });
+  }
+}
+
