@@ -157,22 +157,31 @@ export async function deleteLicense(req, res) {
   }
 }
 
-// Update license by licenseKey
+// ✅ FIXED: Update license by licenseKey - NOW SUPPORTS licenseType
 export async function updateLicense(req, res) {
   try {
     const { licenseKey } = req.params;
     const cleanKey = licenseKey.trim();
-    const { expiryDate, status } = req.body;
+    const { expiryDate, status, licenseType } = req.body;  // ✅ Added licenseType
 
     const updateData = {};
     if (expiryDate) updateData.expiryDate = new Date(expiryDate);
     if (status) updateData.status = status;
+    if (licenseType) updateData.licenseType = licenseType;  // ✅ Added this line
+
+    console.log('Update payload received:', req.body);        // ✅ Debug log
+    console.log('Update data being saved:', updateData);      // ✅ Debug log
 
     const updatedLicense = await License.findOneAndUpdate(
       { licenseKey: cleanKey },
       { $set: updateData },
-      { new: true }
+      { 
+        new: true,
+        runValidators: true  // ✅ Added for enum validation
+      }
     );
+
+    console.log('Updated license from DB:', updatedLicense.licenseType);  // ✅ Debug log
 
     if (!updatedLicense) {
       return res.status(404).json({ message: 'License not found' });
@@ -184,7 +193,7 @@ export async function updateLicense(req, res) {
     });
   } catch (error) {
     console.error('Error updating license:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message });
   }
 }
 
@@ -277,4 +286,3 @@ export async function updateMonitoringUsage(req, res) {
     res.status(500).json({ ok: false, message: 'Server error' });
   }
 }
-
